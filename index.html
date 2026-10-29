@@ -333,6 +333,24 @@ footer{border-top:1px solid var(--line);color:var(--mist)}
 @media (max-width:520px){h1,.hero h1{font-size:1.9rem} h2{font-size:1.45rem} .wrap{padding:18px 16px 64px} .card{padding:18px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 
+/* Dodo inside lessons (orange: Dodo speaks) */
+.dodo-say{display:flex;gap:10px;align-items:flex-start}
+.dodo-say .bubble{flex:1;min-width:0}
+.dodo-say>span{flex:0 0 auto;display:flex}
+.card.key{position:relative;overflow:visible}
+.card.key .peek{position:absolute;top:-22px;right:16px;animation:bob 2.6s ease-in-out infinite;pointer-events:none}
+.card.key h3{padding-right:52px}
+
+/* key terms: revealed one at a time, like a story */
+.acro.story{display:flex;flex-direction:column;gap:8px}
+.acro.story .term{display:grid;grid-template-columns:minmax(90px,auto) 1fr;gap:4px 14px;align-items:baseline;background:#FFF6EC;border-radius:14px;padding:10px 14px}
+.acro.story .term[hidden]{display:none}
+.acro.story .term.pop{animation:rise .4s var(--spring) both}
+.storyctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.storyctl .count{font-size:13px;font-weight:700;color:var(--blue)}
+.storyctl .btn.ghost{margin-left:auto;padding:10px 16px}
+@media (max-width:520px){.acro.story .term{grid-template-columns:1fr;gap:2px}}
+
 </style>
 </head>
 <body>
@@ -1431,8 +1449,50 @@ const App=(()=>{
     for(let i=0;i<28;i++){const p=document.createElement('i');const a=Math.random()*Math.PI*2,r=90+Math.random()*160;
       p.style.cssText=`width:${6+Math.random()*6}px;height:${8+Math.random()*8}px;background:${cols[i%4]};--dx:${Math.cos(a)*r}px;--dy:${Math.sin(a)*r-40}px;--r:${Math.random()*540-270}deg;animation-delay:${Math.random()*.08}s`;c.appendChild(p)}
     document.body.appendChild(c);setTimeout(()=>c.remove(),1400)}
+
+  const SAY={
+    map:'Tap any idea to see what it means and how it connects.',
+    anatomy:'Every idea gets a symbol. Learn the symbols, then watch them work together.',
+    l1:"Hi! Let's untangle AI, ML, deep learning and GenAI. They nest inside each other, like dolls.",
+    l2:'The big secret: an LLM has one job, predicting the next token. Everything else builds on that.',
+    l3:'Who makes the models, closed vs open weights, and why reasoning models think before answering.',
+    r1:"Review time! If you miss one, I'll tell you which lesson to re-read.",
+    l4:"Prompting is structured thinking. Let's look inside a prompt that works.",
+    l5:'Now the model gets hands: agents, tools, RAG and MCP.',
+    l6:"Let's follow the money: token costs, pricing and what makes a moat.",
+    r2:"Second review! Same deal: miss one and I'll point you to the lesson.",
+    l7:'Last lesson: where bias gets in, privacy, and building AI responsibly.',
+    mock:'Say each answer out loud first, then open the strong answer. You can do this.'
+  };
+  function sayEl(mood,text,size=52){const d=document.createElement('div');d.className='dodo-say';
+    d.innerHTML=`<span class="bob">${dodo(mood,size)}</span><div class="bubble"><b>${ic('chat-circle-dots',14)}DODO</b><span></span></div>`;
+    d.querySelector('.bubble>span').textContent=text;return d}
+  function addDodo(){
+    Object.entries(SAY).forEach(([id,t])=>{const sec=document.getElementById(id),h=sec&&sec.querySelector('h2');if(h)h.after(sayEl(id==='l1'||id==='mock'?'happy':'calm',t))});
+    $$('#wrap .card.key').forEach(c=>{const p=document.createElement('span');p.className='peek';p.title='Dodo says: start here';p.innerHTML=dodo('happy',46);c.prepend(p)});
+    $$('#wrap .card.interview').forEach(c=>c.querySelector('h3').after(sayEl('think','Try saying it out loud in 20 seconds before you read my version.',40)));
+    $$('#wrap .card.ask').forEach(c=>c.querySelector('h3').after(sayEl('calm',"Still curious? Ask your own AI. I'll pack this lesson into the prompt for you.",40)));
+    $$('#wrap .quiz > div:first-child h2').forEach(h=>h.after(sayEl('happy','Quiz time! Tap an answer and I will tell you why.',40)));
+  }
+
+  function storyTerms(){
+    $$('#wrap .acro').forEach(box=>{
+      const kids=[...box.children],items=[];
+      for(let i=0;i<kids.length;i++){if(kids[i].tagName==='B'){const t=document.createElement('div');t.className='term';t.append(kids[i]);if(kids[i+1]&&kids[i+1].tagName!=='B'){t.append(kids[i+1]);i++}items.push(t)}}
+      if(items.length<2)return;
+      box.innerHTML='';box.classList.add('story');items.forEach((t,i)=>{if(i)t.hidden=true;box.append(t)});
+      const ctl=document.createElement('div');ctl.className='storyctl';
+      ctl.innerHTML=`<button class="btn" type="button">Next term${ic('caret-right',18)}</button><span class="count"></span><button class="btn ghost" type="button">Show all</button>`;
+      const [next,all]=ctl.querySelectorAll('button'),count=ctl.querySelector('.count');
+      let n=1;const paint=()=>{count.textContent=`${n} of ${items.length}`;if(n>=items.length){next.remove();all.remove();count.textContent=`All ${items.length} terms`}};
+      const reveal=()=>{if(n>=items.length)return;items[n].hidden=false;items[n].classList.add('pop');Sound.play('pop',Math.min(n,6));n++;paint()};
+      next.addEventListener('click',e=>{e.stopPropagation();reveal()});
+      all.addEventListener('click',e=>{e.stopPropagation();while(n<items.length){items[n].hidden=false;n++}Sound.play('whoosh');paint()});
+      box.after(ctl);paint();
+    });
+  }
   function start(){
-    paintIcons();paintSound();addPagers();updateMini();
+    storyTerms();addDodo();paintIcons();paintSound();addPagers();updateMini();
     $('#menubtn').onclick=()=>drawer(true);$('#closebtn').onclick=()=>drawer(false);$('#scrim').onclick=()=>drawer(false);
     document.addEventListener('keydown',e=>{if(e.key==='Escape')drawer(false)});
     $$('[data-sound-toggle]').forEach(b=>b.addEventListener('click',()=>{Sound.toggle();paintSound()}));
