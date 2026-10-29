@@ -351,6 +351,16 @@ footer{border-top:1px solid var(--line);color:var(--mist)}
 .storyctl .btn.ghost{margin-left:auto;padding:10px 16px}
 @media (max-width:520px){.acro.story .term{grid-template-columns:1fr;gap:2px}}
 
+/* neural network: a left-aligned flow with arrows */
+.nn{text-align:left;gap:24px;font-size:.92rem}
+.nn div{position:relative;border-left:4px solid var(--orange-fill)!important;padding:12px 14px}
+.nn b{color:var(--accent)}
+.nn div:not(:last-child)::after{content:"→";position:absolute;right:-20px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:700;font-size:18px;line-height:1}
+@media (max-width:520px){
+  .nn{gap:26px}
+  .nn div:not(:last-child)::after{content:"↓";right:auto;left:22px;top:auto;bottom:-24px;transform:none}
+}
+
 </style>
 </head>
 <body>
